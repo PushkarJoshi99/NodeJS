@@ -1,5 +1,6 @@
 const http = require("http");
 const fs = require("fs");
+const { text } = require("stream/consumers");
 
 const server = http.createServer((req, res) => {
 	const url = req.url;
@@ -8,12 +9,22 @@ const server = http.createServer((req, res) => {
 		res.setHeader("Content-Type", "text/html");
 		res.write("<html>");
 		res.write("<head><title>Redirecting</title></head>");
-		res.write("<body><form method = 'POST' action = '/message'><button type='submit'>Click here</button></form></body>");
+		res.write("<body><form method = 'POST' action = '/message'><input type='text' name='message'><button type='submit'>Click here</button></form></body>");
 		res.write("</html>");
 		return res.end();
 	}
     if(url==="/message" && method === 'POST') {
-        fs.writeFileSync('message.txt',"I am Pushkar");
+        const body = []
+        req.on('data', (chunk)=>{
+            console.log(chunk)
+            body.push(chunk)
+        })
+        req.on('end', ()=>{
+            const data = Buffer.concat(body).toString()
+            console.log(data)
+            message = data.split('=')[1]
+            fs.writeFileSync('message.txt',message);
+        })
         res.statusCode = 302;
         res.setHeader('Location','/');
         return res.end();
